@@ -14,6 +14,7 @@
 @property (copy, nonatomic) DispatchTimerHandle handle;
 @property (readwrite,assign, nonatomic) NSTimeInterval duration;
 @property (readwrite,assign, nonatomic) BOOL isValid;
+@property (strong, nonatomic) dispatch_queue_t timerQueue;
 
 @end
 
@@ -55,19 +56,15 @@
         handle();
     }
     NSTimeInterval period = self.duration; //设置时间间隔
-    dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0));
-    dispatch_source_set_timer(timer, dispatch_walltime(NULL, 0), period * NSEC_PER_SEC, 0); //每秒执行
-    __weak typeof(self) weakSelf = self;
-    dispatch_source_set_event_handler(timer, ^{ //在这里执行事件
-        __strong typeof(weakSelf) self = weakSelf;
-        DispatchTimerHandle handle = self.handle;
+    self.timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.timerQueue);
+    dispatch_source_set_timer(self.timer, dispatch_walltime(NULL, 0), period * NSEC_PER_SEC, 0); //每秒执行
+    dispatch_source_set_event_handler(self.timer, ^{ //在这里执行事件
         if(handle)
         {
             handle();
         }
     });
-    dispatch_resume(timer);
-    self.timer = timer;
+    dispatch_resume(self.timer);
 }
 
 - (void)endTimer
@@ -78,6 +75,17 @@
         self.timer = nil;
     }
     self.isValid = NO;
+}
+
+- (dispatch_queue_t)timerQueue
+{
+    if(!_timerQueue)
+    {
+        NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
+        NSString *identifier = [NSString stringWithFormat:@"DispatchTimer_%f",now];
+        _timerQueue = dispatch_queue_create([identifier UTF8String], DISPATCH_QUEUE_SERIAL);
+    }
+    return _timerQueue;
 }
 
 @end
