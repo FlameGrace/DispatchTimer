@@ -21,7 +21,7 @@
 
 @implementation DispatchTimer
 
-- (instancetype)initWithDuration:(NSTimeInterval)duration handleBlock:(LMVDispatchTimerHandle)handleBlock
+- (instancetype)initWithDuration:(NSTimeInterval)duration handleBlock:(DispatchTimerHandle)handleBlock
 {
     
     if(self = [super init])
