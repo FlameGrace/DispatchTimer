@@ -14,6 +14,7 @@ typedef void(^DispatchTimerHandle)(void);
 
 @property (readonly, assign, nonatomic) NSTimeInterval duration;
 @property (readonly, assign, nonatomic) BOOL isValid;
+@property (assign, nonatomic) BOOL executeWhenStartTimer; //是否在开启定时器时立即执行一次，默认YES
 
 - (instancetype)initWithDuration:(NSTimeInterval)duration handleBlock:(DispatchTimerHandle)handleBlock;
 

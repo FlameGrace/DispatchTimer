@@ -15,16 +15,18 @@
 @property (readwrite,assign, nonatomic) NSTimeInterval duration;
 @property (readwrite,assign, nonatomic) BOOL isValid;
 @property (strong, nonatomic) dispatch_queue_t timerQueue;
+@property (assign, nonatomic) BOOL hadExecuteOneTime;
 
 @end
 
 @implementation DispatchTimer
 
-- (instancetype)initWithDuration:(NSTimeInterval)duration handleBlock:(DispatchTimerHandle)handleBlock
+- (instancetype)initWithDuration:(NSTimeInterval)duration handleBlock:(LMVDispatchTimerHandle)handleBlock
 {
     
     if(self = [super init])
     {
+        self.executeWhenStartTimer = YES;
         self.duration = duration;
         self.handle = handleBlock;
     }
@@ -44,23 +46,23 @@
 
 - (void)startTimer
 {
-    if(self.timer && self.isValid)
-    {
+    if(self.timer && self.isValid){
         return;
     }
     [self endTimer];
+    self.hadExecuteOneTime = NO;
     self.isValid = YES;
     DispatchTimerHandle handle = self.handle;
-    if(handle)
-    {
-        handle();
-    }
     NSTimeInterval period = self.duration; //设置时间间隔
     self.timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, self.timerQueue);
     dispatch_source_set_timer(self.timer, dispatch_walltime(NULL, 0), period * NSEC_PER_SEC, 0); //每秒执行
+    __weak typeof(self) weakSelf = self;
     dispatch_source_set_event_handler(self.timer, ^{ //在这里执行事件
-        if(handle)
-        {
+        if(!weakSelf.executeWhenStartTimer && !weakSelf.hadExecuteOneTime){
+            weakSelf.hadExecuteOneTime = YES;
+            return ;
+        }
+        if(handle){
             handle();
         }
     });
